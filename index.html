@@ -1,36 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MathViz - Grade 5 Interactive Learning</title>
+    <title>小学数学可视课 - 5年级上册互动教学</title>
     
-    <!-- 1. Tailwind CSS -->
+    <!-- 1. 引入 Tailwind CSS (样式库) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. React & ReactDOM -->
+    <!-- 2. 引入 React 和 ReactDOM (核心框架) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- 3. Babel (for JSX) -->
+    <!-- 3. 引入 Babel (用于解析 React 代码) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
+        /* 优化滚动条样式 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f8fafc; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { font-family: system-ui, -apple-system, sans-serif; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
     <div id="root"></div>
 
-    <!-- Application Logic -->
+    <!-- 应用程序逻辑 -->
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- Icons (Inline SVG to avoid dependencies) ---
+        // --- 1. 图标组件 (使用 SVG 绘制，无需外部图片) ---
         const IconWrapper = ({ children, className, onClick, disabled }) => (
             <svg 
                 xmlns="http://www.w3.org/2000/svg" 
@@ -61,7 +62,7 @@
             Copy: (p) => <IconWrapper {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconWrapper>
         };
 
-        // --- Constants ---
+        // --- 常量定义 ---
         const Unit = {
             DECIMAL_DIVISION: 'DECIMAL_DIVISION',
             SYMMETRY_TRANSLATION: 'SYMMETRY_TRANSLATION',
@@ -69,7 +70,7 @@
             POLYGON_AREA: 'POLYGON_AREA'
         };
 
-        // --- Component: ConceptCard ---
+        // --- 通用组件: ConceptCard (知识卡片) ---
         const ConceptCard = ({ title, description, color = 'blue', children }) => {
             const colorClasses = {
                 blue: 'border-t-blue-500',
@@ -93,7 +94,7 @@
             );
         };
 
-        // --- View 1: Decimal Division ---
+        // --- 视图 1: 小数除法 (DecimalView) ---
         const DecimalView = () => {
             const [dividend] = useState(10);
             const [divisor, setDivisor] = useState(2);
@@ -104,26 +105,26 @@
             return (
                 <div className="space-y-6">
                     <ConceptCard
-                        title="Decimal Division Discovery"
+                        title="除数是小数的除法发现"
                         color="blue"
                         description={
                             <>
-                                <p><strong>When Divisor > 1</strong>, Quotient &lt; Dividend.</p>
-                                <p><strong>When Divisor &lt; 1</strong>, Quotient > Dividend.</p>
-                                <p className="mt-2 text-xs text-gray-500">Drag the slider below to change the divisor and observe the quotient (green/orange bar).</p>
+                                <p><strong>当除数大于 1 时</strong>，商小于被除数。(如: 10 ÷ 2 = 5)</p>
+                                <p><strong>当除数小于 1 时</strong>，商大于被除数。(如: 10 ÷ 0.5 = 20)</p>
+                                <p className="mt-2 text-xs text-gray-500">拖动下面的滑块改变除数大小，观察商（绿色/橙色部分）的变化。</p>
                             </>
                         }
                     >
                         <div className="w-full flex flex-col items-center space-y-8">
                             <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                                 <div className="flex flex-col">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase">Dividend</label>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">被除数</label>
                                     <span className="text-2xl font-bold text-blue-600">{dividend}</span>
                                 </div>
                                 <div className="text-2xl text-gray-400">÷</div>
                                 <div className="flex flex-col w-48">
                                     <label className="text-xs font-semibold text-gray-500 uppercase flex justify-between">
-                                        <span>Divisor</span>
+                                        <span>除数</span>
                                         <span>{divisor.toFixed(1)}</span>
                                     </label>
                                     <input 
@@ -135,7 +136,7 @@
                                 </div>
                                 <div className="text-2xl text-gray-400">=</div>
                                 <div className="flex flex-col">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase">Quotient</label>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">商</label>
                                     <span className={`text-2xl font-bold transition-colors duration-300 ${result > dividend ? 'text-green-600' : 'text-orange-500'}`}>
                                         {result % 1 === 0 ? result : result.toFixed(2)}
                                     </span>
@@ -145,34 +146,50 @@
                             <div className="w-full overflow-x-auto flex justify-center p-4">
                                 <div className="relative" style={{ width: '100%', minWidth: '300px', height: '200px' }}>
                                     <div className="absolute bottom-0 w-full border-t border-gray-300 flex justify-between text-xs text-gray-400 pt-1">
-                                        <span>0</span><span>Quantity</span>
+                                        <span>0</span><span>数量</span>
                                     </div>
                                     <div className="absolute left-0 top-10 bg-blue-100 border-2 border-blue-500 rounded-r-md flex items-center justify-center text-blue-800 font-bold transition-all duration-300"
                                          style={{ width: `${Math.min(dividend * scale, 1000)}px`, height: `${barHeight}px` }}>
-                                        Dividend: {dividend}
+                                        被除数: {dividend}
                                     </div>
                                     <div className={`absolute left-0 top-28 border-2 rounded-r-md flex items-center justify-center font-bold transition-all duration-500 ease-out ${result > dividend ? 'bg-green-100 border-green-500 text-green-800' : 'bg-orange-100 border-orange-500 text-orange-800'}`}
                                          style={{ width: `${Math.min(result * scale, 1000)}px`, height: `${barHeight}px` }}>
-                                        <span className="whitespace-nowrap px-2">Quotient: {result % 1 === 0 ? result : result.toFixed(1)}</span>
+                                        <span className="whitespace-nowrap px-2">商: {result % 1 === 0 ? result : result.toFixed(1)}</span>
                                     </div>
                                     <div className="absolute left-[320px] top-0 bottom-0 border-l border-dashed border-gray-300 pointer-events-none">
-                                        <span className="text-xs text-gray-400 ml-1 bg-white">Reference (10)</span>
+                                        <span className="text-xs text-gray-400 ml-1 bg-white">参考线 (10)</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <div className={`text-center font-medium px-4 py-2 rounded-full text-sm ${result > dividend ? 'bg-green-100 text-green-700' : result < dividend ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}`}>
-                                {result > dividend && "Observation: Divisor < 1, Quotient gets larger!"}
-                                {result < dividend && "Observation: Divisor > 1, Quotient gets smaller!"}
-                                {result === dividend && "Observation: Divisor = 1, Quotient stays the same."}
+                                {result > dividend && "发现：除数 < 1，商变大了！"}
+                                {result < dividend && "发现：除数 > 1，商变小了！"}
+                                {result === dividend && "发现：除数 = 1，商不变。"}
                             </div>
                         </div>
+                    </ConceptCard>
+
+                    <ConceptCard
+                        title="小数除法计算法则"
+                        color="blue"
+                        description="除数是小数的除法，先移动除数的小数点，使它变成整数；除数的小数点向右移动几位，被除数的小数点也向右移动几位（位数不够的，在被除数末尾用 0 补足），然后按照除数是整数的小数除法进行计算。"
+                    >
+                         <div className="flex flex-col items-center justify-center space-y-4 p-4">
+                            <div className="text-3xl font-mono bg-gray-800 text-white p-4 rounded-lg shadow-lg">
+                               <span className="opacity-50">3.5</span> ÷ <span className="text-yellow-400">0.5</span> = ?
+                            </div>
+                            <div className="text-2xl text-gray-400">↓ 转化 (都扩大10倍)</div>
+                            <div className="text-3xl font-mono bg-white border-2 border-gray-800 text-gray-800 p-4 rounded-lg shadow-lg">
+                               <span className="opacity-50">35</span> ÷ <span className="text-yellow-600 font-bold">5</span> = 7
+                            </div>
+                         </div>
                     </ConceptCard>
                 </div>
             );
         };
 
-        // --- View 2: Symmetry & Translation ---
+        // --- 视图 2: 轴对称与平移 (SymmetryView) ---
         const SymmetryView = () => {
             const [vertices, setVertices] = useState([]);
             const [showReflection, setShowReflection] = useState(false);
@@ -211,12 +228,12 @@
 
             return (
                 <div className="space-y-8">
-                    <ConceptCard title="Axial Symmetry: Shape Completion" color="purple" description="Draw a shape on the left side. Click 'Generate' to see how it folds across the axis of symmetry to complete the figure.">
+                    <ConceptCard title="轴对称图形：图形补全" color="purple" description="轴对称图形沿对称轴对折后能完全重合。请在左侧绘制图形，点击“生成”后，观察图形如何沿着对称轴“翻折”补全。">
                         <div className="flex flex-col items-center w-full">
                             <div className="flex flex-wrap gap-3 mb-4 justify-center">
-                                <button onClick={undoLastPoint} disabled={vertices.length === 0} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm disabled:opacity-40"><Icons.Undo className="w-4 h-4"/><span>Undo</span></button>
-                                <button onClick={clearCanvas} disabled={vertices.length === 0} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm disabled:opacity-40"><Icons.RefreshCw className="w-4 h-4"/><span>Clear</span></button>
-                                <button onClick={() => setShowReflection(!showReflection)} disabled={vertices.length < 2} className={`flex items-center space-x-1 px-4 py-1.5 rounded-md shadow-sm text-sm disabled:opacity-50 ${showReflection ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white'}`}><Icons.Copy className="w-4 h-4"/><span>{showReflection ? 'Fold Back' : 'Generate / Fold'}</span></button>
+                                <button onClick={undoLastPoint} disabled={vertices.length === 0} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm disabled:opacity-40"><Icons.Undo className="w-4 h-4"/><span>撤销</span></button>
+                                <button onClick={clearCanvas} disabled={vertices.length === 0} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm disabled:opacity-40"><Icons.RefreshCw className="w-4 h-4"/><span>清空</span></button>
+                                <button onClick={() => setShowReflection(!showReflection)} disabled={vertices.length < 2} className={`flex items-center space-x-1 px-4 py-1.5 rounded-md shadow-sm text-sm disabled:opacity-50 ${showReflection ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white'}`}><Icons.Copy className="w-4 h-4"/><span>{showReflection ? '折叠还原' : '生成对称图形'}</span></button>
                             </div>
                             <div className="relative bg-white border-2 border-slate-200 rounded-lg shadow-md select-none overflow-hidden" style={{ width, height }}>
                                 <svg width={width} height={height}>
@@ -243,25 +260,30 @@
                                     )))}
                                 </svg>
                             </div>
+                            <div className="mt-6 text-center max-w-lg">
+                                <div className="flex items-center justify-center space-x-3 text-sm text-slate-600 bg-slate-50 px-6 py-3 rounded-xl border border-slate-100 shadow-sm">
+                                   <span>1. 左侧画图</span> <span className="text-slate-300">→</span> <span>2. 点击生成</span> <span className="text-slate-300">→</span> <span className="text-purple-600 font-bold">自动翻折补全</span>
+                                </div>
+                            </div>
                         </div>
                     </ConceptCard>
 
-                    <ConceptCard title="Translation" color="purple" description="Move a shape along a straight line. Translation does not change the shape or size, only its position.">
+                    <ConceptCard title="平移现象" color="purple" description="将一个图形沿某个方向移动一定的距离。平移不改变图形的形状和大小。">
                         <div className="flex flex-col items-center w-full">
                             <div className="flex flex-wrap gap-8 mb-8 justify-center bg-purple-50 p-4 rounded-lg border border-purple-100">
                                 <div className="flex flex-col items-center w-48">
-                                    <label className="text-xs font-bold mb-2 text-purple-800">Horizontal (X)</label>
+                                    <label className="text-xs font-bold mb-2 text-purple-800">水平移动 (X)</label>
                                     <input type="range" min="-100" max="100" value={translateX} onChange={e => setTranslateX(parseInt(e.target.value))} className="w-full accent-purple-600" />
                                 </div>
                                 <div className="flex flex-col items-center w-48">
-                                    <label className="text-xs font-bold mb-2 text-purple-800">Vertical (Y)</label>
+                                    <label className="text-xs font-bold mb-2 text-purple-800">垂直移动 (Y)</label>
                                     <input type="range" min="-50" max="50" value={translateY} onChange={e => setTranslateY(parseInt(e.target.value))} className="w-full accent-purple-600" />
                                 </div>
                             </div>
                             <div className="relative bg-white w-full h-72 border-2 border-slate-200 rounded-xl overflow-hidden flex items-center justify-center shadow-inner">
                                 <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(#94a3b8 1px, transparent 1px), linear-gradient(90deg, #94a3b8 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-                                <div className="absolute w-24 h-24 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center bg-slate-50/50"><span className="text-xs text-slate-400 font-bold">Start Pos</span></div>
-                                <div className="absolute w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl flex items-center justify-center text-white font-bold text-lg transition-transform duration-150 ease-out border-2 border-white z-10" style={{ transform: `translate(${translateX}px, ${translateY}px)` }}>Shape</div>
+                                <div className="absolute w-24 h-24 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center bg-slate-50/50"><span className="text-xs text-slate-400 font-bold">起始位置</span></div>
+                                <div className="absolute w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl flex items-center justify-center text-white font-bold text-lg transition-transform duration-150 ease-out border-2 border-white z-10" style={{ transform: `translate(${translateX}px, ${translateY}px)` }}>平移</div>
                             </div>
                         </div>
                     </ConceptCard>
@@ -269,7 +291,7 @@
             );
         };
 
-        // --- View 3: Factors & Multiples ---
+        // --- 视图 3: 倍数和因数 (FactorsView) ---
         const FactorsView = () => {
             const [highlightMode, setHighlightMode] = useState('none');
             const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
@@ -291,20 +313,20 @@
                 }
             };
             const controls = [
-                { id: '2', label: 'Multiples of 2', color: 'bg-red-100 text-red-700' },
-                { id: '3', label: 'Multiples of 3', color: 'bg-green-100 text-green-700' },
-                { id: '5', label: 'Multiples of 5', color: 'bg-blue-100 text-blue-700' },
-                { id: '2and3', label: 'Multiples of 2 & 3', color: 'bg-yellow-100 text-yellow-700' },
-                { id: '2and5', label: 'Multiples of 2 & 5', color: 'bg-purple-100 text-purple-700' },
-                { id: 'prime', label: 'Prime Numbers', color: 'bg-gray-800 text-white' },
+                { id: '2', label: '2的倍数', color: 'bg-red-100 text-red-700' },
+                { id: '3', label: '3的倍数', color: 'bg-green-100 text-green-700' },
+                { id: '5', label: '5的倍数', color: 'bg-blue-100 text-blue-700' },
+                { id: '2and3', label: '2和3的公倍数', color: 'bg-yellow-100 text-yellow-700' },
+                { id: '2and5', label: '2和5的公倍数', color: 'bg-purple-100 text-purple-700' },
+                { id: 'prime', label: '质数', color: 'bg-gray-800 text-white' },
             ];
 
             return (
                 <div className="space-y-6">
-                    <ConceptCard title="Factors & Multiples Explorer" color="green" description="Click the buttons to explore patterns in numbers 1-100.">
+                    <ConceptCard title="倍数和因数探索板" color="green" description="自然数(0除外)中，倍数和因数是相互依存的。通过下方的按钮，观察不同倍数的特征和分布规律。">
                         <div className="w-full">
                             <div className="flex flex-wrap gap-2 mb-6 justify-center">
-                                <button onClick={() => setHighlightMode('none')} className="px-3 py-2 rounded-lg text-sm border bg-slate-200">Reset</button>
+                                <button onClick={() => setHighlightMode('none')} className="px-3 py-2 rounded-lg text-sm border bg-slate-200">重置</button>
                                 {controls.map(ctrl => (
                                     <button key={ctrl.id} onClick={() => setHighlightMode(ctrl.id)} className={`px-3 py-2 rounded-lg text-sm border transition-all ${highlightMode === ctrl.id ? 'ring-2 ring-offset-1 ring-indigo-400 font-bold' : 'opacity-80'} ${ctrl.color}`}>{ctrl.label}</button>
                                 ))}
@@ -314,13 +336,22 @@
                                     <div key={num} className={`aspect-square flex items-center justify-center rounded-md text-sm font-medium transition-all duration-300 ${checkCondition(num) ? 'bg-green-500 text-white transform scale-110 z-10' : 'bg-white border border-slate-100 text-slate-400'}`}>{num}</div>
                                 ))}
                             </div>
+                            <div className="mt-6 bg-green-50 p-4 rounded-lg text-sm text-green-800">
+                                <strong>特征总结：</strong>
+                                {highlightMode === '2' && " 个位上是 0, 2, 4, 6, 8 的数是 2 的倍数。"}
+                                {highlightMode === '3' && " 各个数位上的数字之和是 3 的倍数。"}
+                                {highlightMode === '5' && " 个位上是 0 或 5 的数是 5 的倍数。"}
+                                {highlightMode === '2and5' && " 个位上是 0 的数既是 2 的倍数，又是 5 的倍数。"}
+                                {highlightMode === 'prime' && " 质数只有两个因数：1 和它本身。1 既不是质数也不是合数。"}
+                                {highlightMode === 'none' && " 点击上方按钮开始探索。"}
+                            </div>
                         </div>
                     </ConceptCard>
                 </div>
             );
         };
 
-        // --- View 4: Polygon Area ---
+        // --- 视图 4: 面积 (AreaView) ---
         const AreaView = () => {
             const [tab, setTab] = useState('para');
             const [base, setBase] = useState(120);
@@ -332,28 +363,28 @@
 
             const renderParallelogram = () => {
                 const points = `${startX},${startY} ${startX + base},${startY} ${startX + base + skew},${startY - height} ${startX + skew},${startY - height}`;
-                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">base = {Math.round(base/10)}</text><line x1={startX + skew} y1={startY - height} x2={startX + skew} y2={startY} stroke="#333" strokeDasharray="4,4" /><text x={startX + skew - 10} y={startY - height / 2} textAnchor="end" className="text-xs fill-slate-500">h = {Math.round(height/10)}</text></>;
+                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">底 a = {Math.round(base/10)}</text><line x1={startX + skew} y1={startY - height} x2={startX + skew} y2={startY} stroke="#333" strokeDasharray="4,4" /><text x={startX + skew - 10} y={startY - height / 2} textAnchor="end" className="text-xs fill-slate-500">高 h = {Math.round(height/10)}</text></>;
             };
 
             const renderTriangle = () => {
                 const points = `${startX},${startY} ${startX + base},${startY} ${startX + base/2 + skew},${startY - height}`;
-                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">base = {Math.round(base/10)}</text><line x1={startX + base/2 + skew} y1={startY - height} x2={startX + base/2 + skew} y2={startY} stroke="#333" strokeDasharray="4,4" /><text x={startX + base/2 + skew + 5} y={startY - height / 2} className="text-xs fill-slate-500">h = {Math.round(height/10)}</text></>;
+                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">底 a = {Math.round(base/10)}</text><line x1={startX + base/2 + skew} y1={startY - height} x2={startX + base/2 + skew} y2={startY} stroke="#333" strokeDasharray="4,4" /><text x={startX + base/2 + skew + 5} y={startY - height / 2} className="text-xs fill-slate-500">高 h = {Math.round(height/10)}</text></>;
             };
 
             const renderTrapezoid = () => {
                 const diff = (base - topBase) / 2;
                 const points = `${startX},${startY} ${startX + base},${startY} ${startX + base - diff + skew/2},${startY - height} ${startX + diff + skew/2},${startY - height}`;
-                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">base b = {Math.round(base/10)}</text><text x={startX + base / 2 + skew/2} y={startY - height - 10} textAnchor="middle" className="text-xs fill-slate-500">base a = {Math.round(topBase/10)}</text><line x1={startX + diff + skew/2} y1={startY - height} x2={startX + diff + skew/2} y2={startY} stroke="#333" strokeDasharray="4,4" /></>;
+                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">下底 b = {Math.round(base/10)}</text><text x={startX + base / 2 + skew/2} y={startY - height - 10} textAnchor="middle" className="text-xs fill-slate-500">上底 a = {Math.round(topBase/10)}</text><line x1={startX + diff + skew/2} y1={startY - height} x2={startX + diff + skew/2} y2={startY} stroke="#333" strokeDasharray="4,4" /></>;
             };
 
             return (
                 <div className="space-y-6">
-                    <ConceptCard title="Polygon Area Factory" color="orange" description="Drag sliders to change shape dimensions. Same area doesn't mean same shape!">
+                    <ConceptCard title="多边形面积计算工厂" color="orange" description="通过拖动滑块改变图形的形状，观察面积公式的计算过程。记住：面积相同，形状不一定相同！">
                         <div className="w-full flex flex-col items-center">
                             <div className="flex space-x-2 mb-6 bg-gray-100 p-1 rounded-lg">
-                                <button onClick={() => setTab('para')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'para' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>Parallelogram</button>
-                                <button onClick={() => setTab('tri')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'tri' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>Triangle</button>
-                                <button onClick={() => setTab('trap')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'trap' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>Trapezoid</button>
+                                <button onClick={() => setTab('para')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'para' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>平行四边形</button>
+                                <button onClick={() => setTab('tri')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'tri' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>三角形</button>
+                                <button onClick={() => setTab('trap')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'trap' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>梯形</button>
                             </div>
                             <div className="relative border border-gray-200 rounded-xl bg-white shadow-inner mb-6 w-full max-w-md flex justify-center p-4">
                                 <svg width={svgWidth} height={svgHeight} className="overflow-visible">
@@ -363,11 +394,11 @@
                                 </svg>
                             </div>
                             <div className="w-full max-w-md space-y-4 bg-orange-50 p-6 rounded-xl border border-orange-100">
-                                <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Base/Width</label><input type="range" min="40" max="200" value={base} onChange={e => setBase(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>
-                                <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Height</label><input type="range" min="20" max="120" value={height} onChange={e => setHeight(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>
-                                {tab === 'trap' && <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Top Base</label><input type="range" min="20" max={base-20} value={topBase} onChange={e => setTopBase(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>}
-                                <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Skew/Tilt</label><input type="range" min="-50" max="50" value={skew} onChange={e => setSkew(parseInt(e.target.value))} className="flex-1 accent-gray-400" /></div>
-                                <div className="mt-4 pt-4 border-t border-orange-200 text-center"><p className="text-sm text-gray-500 mb-1">Area S =</p><div className="text-xl font-bold text-orange-700 font-mono">{tab === 'para' ? (base/10 * height/10).toFixed(1) : tab === 'tri' ? ((base/10 * height/10)/2).toFixed(1) : (((topBase+base)/10 * height/10)/2).toFixed(1)}</div></div>
+                                <div className="flex items-center space-x-4"><label className="w-16 text-xs font-bold text-gray-600">底/宽</label><input type="range" min="40" max="200" value={base} onChange={e => setBase(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>
+                                <div className="flex items-center space-x-4"><label className="w-16 text-xs font-bold text-gray-600">高</label><input type="range" min="20" max="120" value={height} onChange={e => setHeight(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>
+                                {tab === 'trap' && <div className="flex items-center space-x-4"><label className="w-16 text-xs font-bold text-gray-600">上底</label><input type="range" min="20" max={base-20} value={topBase} onChange={e => setTopBase(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>}
+                                <div className="flex items-center space-x-4"><label className="w-16 text-xs font-bold text-gray-600">倾斜</label><input type="range" min="-50" max="50" value={skew} onChange={e => setSkew(parseInt(e.target.value))} className="flex-1 accent-gray-400" /></div>
+                                <div className="mt-4 pt-4 border-t border-orange-200 text-center"><p className="text-sm text-gray-500 mb-1">面积 S =</p><div className="text-xl font-bold text-orange-700 font-mono">{tab === 'para' ? (base/10 * height/10).toFixed(1) : tab === 'tri' ? ((base/10 * height/10)/2).toFixed(1) : (((topBase+base)/10 * height/10)/2).toFixed(1)}</div></div>
                             </div>
                         </div>
                     </ConceptCard>
@@ -375,16 +406,16 @@
             );
         };
 
-        // --- Main App ---
+        // --- 主应用程序 (App) ---
         const App = () => {
             const [activeUnit, setActiveUnit] = useState(Unit.DECIMAL_DIVISION);
             const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
             const navItems = [
-                { id: Unit.DECIMAL_DIVISION, label: 'Unit 1: Decimal Division', icon: Icons.Divide, color: 'text-blue-500' },
-                { id: Unit.SYMMETRY_TRANSLATION, label: 'Unit 2: Symmetry & Translation', icon: Icons.Scaling, color: 'text-purple-500' },
-                { id: Unit.FACTORS_MULTIPLES, label: 'Unit 3: Factors & Multiples', icon: Icons.Grid3X3, color: 'text-green-500' },
-                { id: Unit.POLYGON_AREA, label: 'Unit 4: Polygon Area', icon: Icons.Shapes, color: 'text-orange-500' },
+                { id: Unit.DECIMAL_DIVISION, label: '第一单元：小数除法', icon: Icons.Divide, color: 'text-blue-500' },
+                { id: Unit.SYMMETRY_TRANSLATION, label: '第二单元：轴对称和平移', icon: Icons.Scaling, color: 'text-purple-500' },
+                { id: Unit.FACTORS_MULTIPLES, label: '第三单元：倍数和因数', icon: Icons.Grid3X3, color: 'text-green-500' },
+                { id: Unit.POLYGON_AREA, label: '第四单元：多边形面积', icon: Icons.Shapes, color: 'text-orange-500' },
             ];
 
             return (
@@ -392,7 +423,7 @@
                     {isMobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
                     <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-2xl lg:shadow-none transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                         <div className="flex items-center justify-center h-16 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-white">
-                            <div className="flex items-center space-x-2 font-bold text-xl text-slate-800"><Icons.BookOpen className="w-6 h-6 text-indigo-600" /><span className="tracking-tight">MathViz</span></div>
+                            <div className="flex items-center space-x-2 font-bold text-xl text-slate-800"><Icons.BookOpen className="w-6 h-6 text-indigo-600" /><span className="tracking-tight">小学数学可视课</span></div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden absolute right-4 text-slate-500"><Icons.X className="w-6 h-6" /></button>
                         </div>
                         <nav className="p-4 space-y-2">
@@ -403,11 +434,11 @@
                                 </button>
                             ))}
                         </nav>
-                        <div className="absolute bottom-0 p-4 w-full">
-                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-xs text-amber-800 shadow-sm">
-                                <p className="font-bold mb-1">💡 Learning Tip</p>
-                                Interactive learning makes math easier!
-                            </div>
+                         <div className="absolute bottom-0 p-4 w-full">
+                          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-xs text-amber-800 shadow-sm">
+                            <p className="font-bold mb-1">💡 学习小贴士</p>
+                            结合北师大版五年级上册期中考点，动手点一点、画一画，数学其实很简单！
+                          </div>
                         </div>
                     </aside>
                     <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -430,8 +461,10 @@
             );
         };
 
+        // --- 启动渲染 ---
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>
 </html>
+
