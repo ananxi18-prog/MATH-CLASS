@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathViz - Grade 5 Interactive Learning</title>
+    
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 3. Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+    <div id="root"></div>
+
+    <!-- Application Logic -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (Inline SVG to avoid dependencies) ---
+        const IconWrapper = ({ children, className, onClick, disabled }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+                onClick={onClick}
+                style={disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+            >
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            Divide: (p) => <IconWrapper {...p}><circle cx="12" cy="6" r="2"/><line x1="5" x2="19" y1="12" y2="12"/><circle cx="12" cy="18" r="2"/></IconWrapper>,
+            Grid3X3: (p) => <IconWrapper {...p}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></IconWrapper>,
+            Shapes: (p) => <IconWrapper {...p}><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></IconWrapper>,
+            Scaling: (p) => <IconWrapper {...p}><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M14 15H9v-5"/><path d="M16 3h5v5"/><path d="M21 3 9 15"/></IconWrapper>,
+            BookOpen: (p) => <IconWrapper {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconWrapper>,
+            Menu: (p) => <IconWrapper {...p}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></IconWrapper>,
+            X: (p) => <IconWrapper {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconWrapper>,
+            Undo: (p) => <IconWrapper {...p}><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></IconWrapper>,
+            RefreshCw: (p) => <IconWrapper {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconWrapper>,
+            Copy: (p) => <IconWrapper {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconWrapper>
+        };
+
+        // --- Constants ---
+        const Unit = {
+            DECIMAL_DIVISION: 'DECIMAL_DIVISION',
+            SYMMETRY_TRANSLATION: 'SYMMETRY_TRANSLATION',
+            FACTORS_MULTIPLES: 'FACTORS_MULTIPLES',
+            POLYGON_AREA: 'POLYGON_AREA'
+        };
+
+        // --- Component: ConceptCard ---
+        const ConceptCard = ({ title, description, color = 'blue', children }) => {
+            const colorClasses = {
+                blue: 'border-t-blue-500',
+                purple: 'border-t-purple-500',
+                green: 'border-t-green-500',
+                orange: 'border-t-orange-500',
+            };
+
+            return (
+                <div className={`bg-white rounded-xl shadow-sm border border-slate-200 border-t-4 ${colorClasses[color]} p-6 mb-6`}>
+                    <div className="mb-4">
+                        <h2 className="text-xl font-bold text-slate-800 mb-2">{title}</h2>
+                        <div className="text-slate-600 text-sm leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            {description}
+                        </div>
+                    </div>
+                    <div className="relative min-h-[300px] bg-slate-50 rounded-lg border border-slate-200 overflow-hidden flex flex-col items-center justify-center p-4">
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- View 1: Decimal Division ---
+        const DecimalView = () => {
+            const [dividend] = useState(10);
+            const [divisor, setDivisor] = useState(2);
+            const result = dividend / divisor;
+            const scale = 30;
+            const barHeight = 40;
+
+            return (
+                <div className="space-y-6">
+                    <ConceptCard
+                        title="Decimal Division Discovery"
+                        color="blue"
+                        description={
+                            <>
+                                <p><strong>When Divisor > 1</strong>, Quotient &lt; Dividend.</p>
+                                <p><strong>When Divisor &lt; 1</strong>, Quotient > Dividend.</p>
+                                <p className="mt-2 text-xs text-gray-500">Drag the slider below to change the divisor and observe the quotient (green/orange bar).</p>
+                            </>
+                        }
+                    >
+                        <div className="w-full flex flex-col items-center space-y-8">
+                            <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div className="flex flex-col">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">Dividend</label>
+                                    <span className="text-2xl font-bold text-blue-600">{dividend}</span>
+                                </div>
+                                <div className="text-2xl text-gray-400">÷</div>
+                                <div className="flex flex-col w-48">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase flex justify-between">
+                                        <span>Divisor</span>
+                                        <span>{divisor.toFixed(1)}</span>
+                                    </label>
+                                    <input 
+                                        type="range" min="0.1" max="5" step="0.1"
+                                        value={divisor}
+                                        onChange={(e) => setDivisor(parseFloat(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                </div>
+                                <div className="text-2xl text-gray-400">=</div>
+                                <div className="flex flex-col">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">Quotient</label>
+                                    <span className={`text-2xl font-bold transition-colors duration-300 ${result > dividend ? 'text-green-600' : 'text-orange-500'}`}>
+                                        {result % 1 === 0 ? result : result.toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="w-full overflow-x-auto flex justify-center p-4">
+                                <div className="relative" style={{ width: '100%', minWidth: '300px', height: '200px' }}>
+                                    <div className="absolute bottom-0 w-full border-t border-gray-300 flex justify-between text-xs text-gray-400 pt-1">
+                                        <span>0</span><span>Quantity</span>
+                                    </div>
+                                    <div className="absolute left-0 top-10 bg-blue-100 border-2 border-blue-500 rounded-r-md flex items-center justify-center text-blue-800 font-bold transition-all duration-300"
+                                         style={{ width: `${Math.min(dividend * scale, 1000)}px`, height: `${barHeight}px` }}>
+                                        Dividend: {dividend}
+                                    </div>
+                                    <div className={`absolute left-0 top-28 border-2 rounded-r-md flex items-center justify-center font-bold transition-all duration-500 ease-out ${result > dividend ? 'bg-green-100 border-green-500 text-green-800' : 'bg-orange-100 border-orange-500 text-orange-800'}`}
+                                         style={{ width: `${Math.min(result * scale, 1000)}px`, height: `${barHeight}px` }}>
+                                        <span className="whitespace-nowrap px-2">Quotient: {result % 1 === 0 ? result : result.toFixed(1)}</span>
+                                    </div>
+                                    <div className="absolute left-[320px] top-0 bottom-0 border-l border-dashed border-gray-300 pointer-events-none">
+                                        <span className="text-xs text-gray-400 ml-1 bg-white">Reference (10)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={`text-center font-medium px-4 py-2 rounded-full text-sm ${result > dividend ? 'bg-green-100 text-green-700' : result < dividend ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}`}>
+                                {result > dividend && "Observation: Divisor < 1, Quotient gets larger!"}
+                                {result < dividend && "Observation: Divisor > 1, Quotient gets smaller!"}
+                                {result === dividend && "Observation: Divisor = 1, Quotient stays the same."}
+                            </div>
+                        </div>
+                    </ConceptCard>
+                </div>
+            );
+        };
+
+        // --- View 2: Symmetry & Translation ---
+        const SymmetryView = () => {
+            const [vertices, setVertices] = useState([]);
+            const [showReflection, setShowReflection] = useState(false);
+            const [translateX, setTranslateX] = useState(0);
+            const [translateY, setTranslateY] = useState(0);
+
+            const gridSize = 30;
+            const gridCount = 10;
+            const width = gridSize * gridCount * 2 + 20; 
+            const height = gridSize * gridCount + 20;
+            const centerX = width / 2;
+
+            const handleGridClick = (x, y) => {
+                if (showReflection) setShowReflection(false);
+                setVertices(prev => {
+                    if (prev.length > 0) {
+                        const last = prev[prev.length - 1];
+                        if (last.x === x && last.y === y) return prev;
+                    }
+                    return [...prev, { x, y }];
+                });
+            };
+
+            const undoLastPoint = () => {
+                setVertices(prev => prev.slice(0, -1));
+                setShowReflection(false);
+            };
+
+            const clearCanvas = () => {
+                setVertices([]);
+                setShowReflection(false);
+            };
+
+            const gp = (idx) => idx * gridSize + 10;
+            const getPolyPoints = (pts) => pts.map(p => `${gp(p.x)},${gp(p.y)}`).join(' ');
+
+            return (
+                <div className="space-y-8">
+                    <ConceptCard title="Axial Symmetry: Shape Completion" color="purple" description="Draw a shape on the left side. Click 'Generate' to see how it folds across the axis of symmetry to complete the figure.">
+                        <div className="flex flex-col items-center w-full">
+                            <div className="flex flex-wrap gap-3 mb-4 justify-center">
+                                <button onClick={undoLastPoint} disabled={vertices.length === 0} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm disabled:opacity-40"><Icons.Undo className="w-4 h-4"/><span>Undo</span></button>
+                                <button onClick={clearCanvas} disabled={vertices.length === 0} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm disabled:opacity-40"><Icons.RefreshCw className="w-4 h-4"/><span>Clear</span></button>
+                                <button onClick={() => setShowReflection(!showReflection)} disabled={vertices.length < 2} className={`flex items-center space-x-1 px-4 py-1.5 rounded-md shadow-sm text-sm disabled:opacity-50 ${showReflection ? 'bg-purple-700 text-white' : 'bg-purple-600 text-white'}`}><Icons.Copy className="w-4 h-4"/><span>{showReflection ? 'Fold Back' : 'Generate / Fold'}</span></button>
+                            </div>
+                            <div className="relative bg-white border-2 border-slate-200 rounded-lg shadow-md select-none overflow-hidden" style={{ width, height }}>
+                                <svg width={width} height={height}>
+                                    <defs><pattern id="smallGrid" width={gridSize} height={gridSize} patternUnits="userSpaceOnUse"><path d={`M ${gridSize} 0 L 0 0 0 ${gridSize}`} fill="none" stroke="#f1f5f9" strokeWidth="1"/></pattern></defs>
+                                    <rect width="100%" height="100%" fill="url(#smallGrid)" x={10} y={10} />
+                                    <line x1={centerX} y1={0} x2={centerX} y2={height} stroke="#9333ea" strokeWidth="3" strokeDasharray="8,4" />
+                                    
+                                    {vertices.length > 0 && (
+                                        <g>
+                                            <polygon points={getPolyPoints(vertices)} fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" strokeWidth="3" strokeLinejoin="round"/>
+                                            {vertices.map((p, i) => <circle key={`v-${i}`} cx={gp(p.x)} cy={gp(p.y)} r={5} fill="white" stroke="#3b82f6" strokeWidth="2" className="pointer-events-none"/>)}
+                                        </g>
+                                    )}
+                                    <g style={{ transformOrigin: `${centerX}px center`, transform: showReflection ? 'scaleX(-1)' : 'scaleX(1)', opacity: showReflection ? 1 : 0, transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease-in' }}>
+                                        {vertices.length > 0 && (
+                                            <g>
+                                                <polygon points={getPolyPoints(vertices)} fill="rgba(239, 68, 68, 0.4)" stroke="#ef4444" strokeWidth="3" strokeLinejoin="round"/>
+                                                {vertices.map((p, i) => <circle key={`mv-${i}`} cx={gp(p.x)} cy={gp(p.y)} r={5} fill="white" stroke="#ef4444" strokeWidth="2" className="pointer-events-none"/>)}
+                                            </g>
+                                        )}
+                                    </g>
+                                    {Array.from({ length: gridCount * 2 + 1 }).map((_, x) => Array.from({ length: gridCount + 1 }).map((_, y) => (
+                                        <rect key={`${x}-${y}`} x={gp(x) - gridSize/2} y={gp(y) - gridSize/2} width={gridSize} height={gridSize} fill="transparent" className="cursor-crosshair hover:fill-blue-500/20" onClick={() => handleGridClick(x, y)} />
+                                    )))}
+                                </svg>
+                            </div>
+                        </div>
+                    </ConceptCard>
+
+                    <ConceptCard title="Translation" color="purple" description="Move a shape along a straight line. Translation does not change the shape or size, only its position.">
+                        <div className="flex flex-col items-center w-full">
+                            <div className="flex flex-wrap gap-8 mb-8 justify-center bg-purple-50 p-4 rounded-lg border border-purple-100">
+                                <div className="flex flex-col items-center w-48">
+                                    <label className="text-xs font-bold mb-2 text-purple-800">Horizontal (X)</label>
+                                    <input type="range" min="-100" max="100" value={translateX} onChange={e => setTranslateX(parseInt(e.target.value))} className="w-full accent-purple-600" />
+                                </div>
+                                <div className="flex flex-col items-center w-48">
+                                    <label className="text-xs font-bold mb-2 text-purple-800">Vertical (Y)</label>
+                                    <input type="range" min="-50" max="50" value={translateY} onChange={e => setTranslateY(parseInt(e.target.value))} className="w-full accent-purple-600" />
+                                </div>
+                            </div>
+                            <div className="relative bg-white w-full h-72 border-2 border-slate-200 rounded-xl overflow-hidden flex items-center justify-center shadow-inner">
+                                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(#94a3b8 1px, transparent 1px), linear-gradient(90deg, #94a3b8 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+                                <div className="absolute w-24 h-24 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center bg-slate-50/50"><span className="text-xs text-slate-400 font-bold">Start Pos</span></div>
+                                <div className="absolute w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl flex items-center justify-center text-white font-bold text-lg transition-transform duration-150 ease-out border-2 border-white z-10" style={{ transform: `translate(${translateX}px, ${translateY}px)` }}>Shape</div>
+                            </div>
+                        </div>
+                    </ConceptCard>
+                </div>
+            );
+        };
+
+        // --- View 3: Factors & Multiples ---
+        const FactorsView = () => {
+            const [highlightMode, setHighlightMode] = useState('none');
+            const numbers = Array.from({ length: 100 }, (_, i) => i + 1);
+            const isMultiple = (num, factor) => num % factor === 0;
+            const isPrime = (num) => {
+                if (num <= 1) return false;
+                for (let i = 2; i <= Math.sqrt(num); i++) if (num % i === 0) return false;
+                return true;
+            };
+            const checkCondition = (num) => {
+                switch (highlightMode) {
+                    case '2': return isMultiple(num, 2);
+                    case '3': return isMultiple(num, 3);
+                    case '5': return isMultiple(num, 5);
+                    case '2and3': return isMultiple(num, 2) && isMultiple(num, 3);
+                    case '2and5': return isMultiple(num, 2) && isMultiple(num, 5);
+                    case 'prime': return isPrime(num);
+                    default: return false;
+                }
+            };
+            const controls = [
+                { id: '2', label: 'Multiples of 2', color: 'bg-red-100 text-red-700' },
+                { id: '3', label: 'Multiples of 3', color: 'bg-green-100 text-green-700' },
+                { id: '5', label: 'Multiples of 5', color: 'bg-blue-100 text-blue-700' },
+                { id: '2and3', label: 'Multiples of 2 & 3', color: 'bg-yellow-100 text-yellow-700' },
+                { id: '2and5', label: 'Multiples of 2 & 5', color: 'bg-purple-100 text-purple-700' },
+                { id: 'prime', label: 'Prime Numbers', color: 'bg-gray-800 text-white' },
+            ];
+
+            return (
+                <div className="space-y-6">
+                    <ConceptCard title="Factors & Multiples Explorer" color="green" description="Click the buttons to explore patterns in numbers 1-100.">
+                        <div className="w-full">
+                            <div className="flex flex-wrap gap-2 mb-6 justify-center">
+                                <button onClick={() => setHighlightMode('none')} className="px-3 py-2 rounded-lg text-sm border bg-slate-200">Reset</button>
+                                {controls.map(ctrl => (
+                                    <button key={ctrl.id} onClick={() => setHighlightMode(ctrl.id)} className={`px-3 py-2 rounded-lg text-sm border transition-all ${highlightMode === ctrl.id ? 'ring-2 ring-offset-1 ring-indigo-400 font-bold' : 'opacity-80'} ${ctrl.color}`}>{ctrl.label}</button>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-10 gap-1 max-w-2xl mx-auto">
+                                {numbers.map(num => (
+                                    <div key={num} className={`aspect-square flex items-center justify-center rounded-md text-sm font-medium transition-all duration-300 ${checkCondition(num) ? 'bg-green-500 text-white transform scale-110 z-10' : 'bg-white border border-slate-100 text-slate-400'}`}>{num}</div>
+                                ))}
+                            </div>
+                        </div>
+                    </ConceptCard>
+                </div>
+            );
+        };
+
+        // --- View 4: Polygon Area ---
+        const AreaView = () => {
+            const [tab, setTab] = useState('para');
+            const [base, setBase] = useState(120);
+            const [height, setHeight] = useState(80);
+            const [topBase, setTopBase] = useState(60);
+            const [skew, setSkew] = useState(30);
+
+            const svgHeight = 200; const svgWidth = 300; const startX = 50; const startY = 150;
+
+            const renderParallelogram = () => {
+                const points = `${startX},${startY} ${startX + base},${startY} ${startX + base + skew},${startY - height} ${startX + skew},${startY - height}`;
+                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">base = {Math.round(base/10)}</text><line x1={startX + skew} y1={startY - height} x2={startX + skew} y2={startY} stroke="#333" strokeDasharray="4,4" /><text x={startX + skew - 10} y={startY - height / 2} textAnchor="end" className="text-xs fill-slate-500">h = {Math.round(height/10)}</text></>;
+            };
+
+            const renderTriangle = () => {
+                const points = `${startX},${startY} ${startX + base},${startY} ${startX + base/2 + skew},${startY - height}`;
+                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">base = {Math.round(base/10)}</text><line x1={startX + base/2 + skew} y1={startY - height} x2={startX + base/2 + skew} y2={startY} stroke="#333" strokeDasharray="4,4" /><text x={startX + base/2 + skew + 5} y={startY - height / 2} className="text-xs fill-slate-500">h = {Math.round(height/10)}</text></>;
+            };
+
+            const renderTrapezoid = () => {
+                const diff = (base - topBase) / 2;
+                const points = `${startX},${startY} ${startX + base},${startY} ${startX + base - diff + skew/2},${startY - height} ${startX + diff + skew/2},${startY - height}`;
+                return <><polygon points={points} fill="rgba(249, 115, 22, 0.2)" stroke="#f97316" strokeWidth="2" /><text x={startX + base / 2} y={startY + 20} textAnchor="middle" className="text-xs fill-slate-500">base b = {Math.round(base/10)}</text><text x={startX + base / 2 + skew/2} y={startY - height - 10} textAnchor="middle" className="text-xs fill-slate-500">base a = {Math.round(topBase/10)}</text><line x1={startX + diff + skew/2} y1={startY - height} x2={startX + diff + skew/2} y2={startY} stroke="#333" strokeDasharray="4,4" /></>;
+            };
+
+            return (
+                <div className="space-y-6">
+                    <ConceptCard title="Polygon Area Factory" color="orange" description="Drag sliders to change shape dimensions. Same area doesn't mean same shape!">
+                        <div className="w-full flex flex-col items-center">
+                            <div className="flex space-x-2 mb-6 bg-gray-100 p-1 rounded-lg">
+                                <button onClick={() => setTab('para')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'para' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>Parallelogram</button>
+                                <button onClick={() => setTab('tri')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'tri' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>Triangle</button>
+                                <button onClick={() => setTab('trap')} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tab === 'trap' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>Trapezoid</button>
+                            </div>
+                            <div className="relative border border-gray-200 rounded-xl bg-white shadow-inner mb-6 w-full max-w-md flex justify-center p-4">
+                                <svg width={svgWidth} height={svgHeight} className="overflow-visible">
+                                    {tab === 'para' && renderParallelogram()}
+                                    {tab === 'tri' && renderTriangle()}
+                                    {tab === 'trap' && renderTrapezoid()}
+                                </svg>
+                            </div>
+                            <div className="w-full max-w-md space-y-4 bg-orange-50 p-6 rounded-xl border border-orange-100">
+                                <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Base/Width</label><input type="range" min="40" max="200" value={base} onChange={e => setBase(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>
+                                <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Height</label><input type="range" min="20" max="120" value={height} onChange={e => setHeight(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>
+                                {tab === 'trap' && <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Top Base</label><input type="range" min="20" max={base-20} value={topBase} onChange={e => setTopBase(parseInt(e.target.value))} className="flex-1 accent-orange-500" /></div>}
+                                <div className="flex items-center space-x-4"><label className="w-20 text-xs font-bold text-gray-600">Skew/Tilt</label><input type="range" min="-50" max="50" value={skew} onChange={e => setSkew(parseInt(e.target.value))} className="flex-1 accent-gray-400" /></div>
+                                <div className="mt-4 pt-4 border-t border-orange-200 text-center"><p className="text-sm text-gray-500 mb-1">Area S =</p><div className="text-xl font-bold text-orange-700 font-mono">{tab === 'para' ? (base/10 * height/10).toFixed(1) : tab === 'tri' ? ((base/10 * height/10)/2).toFixed(1) : (((topBase+base)/10 * height/10)/2).toFixed(1)}</div></div>
+                            </div>
+                        </div>
+                    </ConceptCard>
+                </div>
+            );
+        };
+
+        // --- Main App ---
+        const App = () => {
+            const [activeUnit, setActiveUnit] = useState(Unit.DECIMAL_DIVISION);
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+            const navItems = [
+                { id: Unit.DECIMAL_DIVISION, label: 'Unit 1: Decimal Division', icon: Icons.Divide, color: 'text-blue-500' },
+                { id: Unit.SYMMETRY_TRANSLATION, label: 'Unit 2: Symmetry & Translation', icon: Icons.Scaling, color: 'text-purple-500' },
+                { id: Unit.FACTORS_MULTIPLES, label: 'Unit 3: Factors & Multiples', icon: Icons.Grid3X3, color: 'text-green-500' },
+                { id: Unit.POLYGON_AREA, label: 'Unit 4: Polygon Area', icon: Icons.Shapes, color: 'text-orange-500' },
+            ];
+
+            return (
+                <div className="flex h-screen overflow-hidden bg-slate-50">
+                    {isMobileMenuOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
+                    <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 shadow-2xl lg:shadow-none transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                        <div className="flex items-center justify-center h-16 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-white">
+                            <div className="flex items-center space-x-2 font-bold text-xl text-slate-800"><Icons.BookOpen className="w-6 h-6 text-indigo-600" /><span className="tracking-tight">MathViz</span></div>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden absolute right-4 text-slate-500"><Icons.X className="w-6 h-6" /></button>
+                        </div>
+                        <nav className="p-4 space-y-2">
+                            {navItems.map((item) => (
+                                <button key={item.id} onClick={() => { setActiveUnit(item.id); setIsMobileMenuOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${activeUnit === item.id ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-200' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                    <div className={`p-1.5 rounded-lg ${activeUnit === item.id ? 'bg-white shadow-sm' : 'bg-slate-100 group-hover:bg-white'}`}><item.icon className={`w-5 h-5 ${activeUnit === item.id ? 'text-indigo-600' : item.color}`} /></div>
+                                    <span className="text-sm font-bold">{item.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+                        <div className="absolute bottom-0 p-4 w-full">
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-xs text-amber-800 shadow-sm">
+                                <p className="font-bold mb-1">💡 Learning Tip</p>
+                                Interactive learning makes math easier!
+                            </div>
+                        </div>
+                    </aside>
+                    <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+                        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shadow-sm z-10 sticky top-0">
+                            <div className="flex items-center">
+                                <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 -ml-2 mr-2 text-slate-600 hover:bg-slate-100 rounded-lg"><Icons.Menu className="w-6 h-6" /></button>
+                                <h1 className="text-lg font-bold text-slate-800">{navItems.find(n => n.id === activeUnit)?.label}</h1>
+                            </div>
+                        </header>
+                        <div className="flex-1 overflow-auto p-4 lg:p-8 bg-slate-50/50">
+                            <div className="max-w-5xl mx-auto pb-10">
+                                {activeUnit === Unit.DECIMAL_DIVISION && <DecimalView />}
+                                {activeUnit === Unit.SYMMETRY_TRANSLATION && <SymmetryView />}
+                                {activeUnit === Unit.FACTORS_MULTIPLES && <FactorsView />}
+                                {activeUnit === Unit.POLYGON_AREA && <AreaView />}
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
